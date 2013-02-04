@@ -1,0 +1,172 @@
+#!/bin/bash
+set -x
+set -e
+
+# Basedir configuration
+BASEDIR="$(dirname $0)"
+cd "$BASEDIR"
+BASEDIR="$(pwd)"
+if [ -z "$MIRROR_OPT" ] ; then
+    if [ -d "$BASEDIR/mirror.git" ] ; then
+        MIRROR_OPT="--reference $BASEDIR/mirror.git"
+    fi
+fi
+
+# Basic parameters
+NDK_RELEASE=${NDK_RELEASE:-r8d}
+NDK_MD5=e1fa0379a3feb59f2f0865f1a90bd382
+NDK_PLATFORM=${NDK_PLATFORM:-android-14}
+
+if [ "x$1" == "x--x86" ] ; then
+    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-x86-4.7}
+    NDK_TARGET=${NDK_TARGET:-i686-linux-android}
+else
+    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-arm-linux-androideabi-4.7}
+    NDK_TARGET=${NDK_TARGET:-arm-linux-androideabi}
+fi
+
+NDK="$BASEDIR/toolchain-$NDK_PLATFORM-$NDK_TOOLCHAIN"
+NDK_ADDON_SRC="$NDK/src"
+NDK_ADDON_PREFIX="$NDK/sysroot/usr"
+
+GHC_DIR="$BASEDIR/ghc-$NDK_PLATFORM-$NDK_TOOLCHAIN"
+GHC_PREFIX="$HOME/.ghc-$NDK_PLATFORM-$NDK_TOOLCHAIN"
+
+NCURSES_RELEASE=5.9
+NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
+
+CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.13}
+
+MAKE_OPTS=${MAKE_OPTS:--j6}
+BUILD_GCC=gcc
+BUILD_ARCH=$($BUILD_GCC -v 2>&1 | grep ^Target: | cut -f 2 -d ' ')
+
+mkdir -p "${BASEDIR}/tarfiles"
+TARDIR="${BASEDIR}/tarfiles"
+
+function check_md5() {
+    FILENAME="$1"
+    MD5="$2"
+    [ -e "${FILENAME}" ] || return 1;
+    [ "$(md5sum "$FILENAME" | cut -f1 -d ' ')" == "$MD5" ]
+}
+
+function apply_patches() {
+    pushd $2 > /dev/null
+    for p in $(find "$BASEDIR/patches" -name "$1") ; do
+        echo Applying patch $p in $(pwd)
+        patch -p1 < "$p"
+    done
+    popd > /dev/null
+}
+
+# Download and configure the Android NDK toolchain
+NDK_TAR_FILE=android-ndk-${NDK_RELEASE}-linux-x86.tar.bz2
+NDK_TAR_PATH="${TARDIR}/${NDK_TAR_FILE}"
+NDK_PATH="$BASEDIR/android-ndk-$NDK_RELEASE"
+if ! [ -d "$NDK" ] ; then
+    if ! [ -d "$NDK_PATH" ] ; then
+        if ! check_md5 "$NDK_TAR_PATH" "$NDK_MD5" ; then
+            echo Downloading the Android NDK $NDK_RELEASE
+            curl -o "${TARDIR}/${NDK_TAR_FILE}"  http://dl.google.com/android/ndk/${NDK_TAR_FILE}
+            check_md5 "$NDK_TAR_PATH" "$NDK_MD5"
+        fi
+        echo Unpacking the Android NDK $NDK_RELEASE
+        tar xf "$NDK_TAR_PATH"
+    fi
+    echo Preparing the Android NDK toolchain in $NDK
+    "$NDK_PATH/build/tools/make-standalone-toolchain.sh" --toolchain=$NDK_TOOLCHAIN --platform=$NDK_PLATFORM --install-dir="$NDK"
+    mkdir -p "$NDK_ADDON_SRC"
+
+    #TMP hack, fake pthread library for ghc linker
+    pushd "$NDK_ADDON_PREFIX/lib" > /dev/null
+    ln -s libcharset.a libpthread.a
+    popd > /dev/null
+fi
+
+# Add toolchain to path
+export PATH="$NDK/bin":$PATH
+
+# Unpack ncurses
+NCURSES_TAR_FILE=ncurses-${NCURSES_RELEASE}.tar.gz
+NCURSES_TAR_PATH="${TARDIR}/${NCURSES_TAR_FILE}"
+NCURSES_SRC="$NDK_ADDON_SRC/ncurses-${NCURSES_RELEASE}"
+if ! [ -d "$NCURSES_SRC" ] ; then
+    if ! check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5" ; then
+        echo Downloading the ncurses $NDK_RELEASE
+        curl -o "${TARDIR}/${NCURSES_TAR_FILE}"  http://ftp.gnu.org/pub/gnu/ncurses/${NCURSES_TAR_FILE}
+        check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5"
+    fi
+    (cd $NDK_ADDON_SRC; tar xf "$TARDIR/$NCURSES_TAR_FILE")
+fi
+
+if ! [ -e "$CONFIG_SUB_SRC/config.sub" ] ; then
+    CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-$NCURSES_SRC}
+fi
+
+# Build and install iconv
+ICONV_SRC="$NDK_ADDON_SRC/iconv"
+if ! [ -e "$NDK_ADDON_PREFIX/lib/libiconv.a" ] ; then
+    if ! [ -d "$ICONV_SRC" ] ; then
+        git clone $MIRROR_OPT https://github.com/ironsteel/iconv-android.git $ICONV_SRC
+
+        # Update config.sub and config.guess
+        cp -v "$CONFIG_SUB_SRC/config.sub" "$ICONV_SRC/build-aux"
+        cp -v "$CONFIG_SUB_SRC/config.guess" "$ICONV_SRC/build-aux"
+        cp -v "$CONFIG_SUB_SRC/config.sub" "$ICONV_SRC/libcharset/build-aux"
+        cp -v "$CONFIG_SUB_SRC/config.guess" "$ICONV_SRC/libcharset/build-aux"
+
+        apply_patches 'iconv-*' $ICONV_SRC
+    fi
+
+    pushd $ICONV_SRC > /dev/null
+    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
+    make $MAKE_OPTS
+    make install
+    popd > /dev/null
+fi
+
+# Build and install ncurses
+if ! [ -e "$NDK_ADDON_PREFIX/lib/libncurses.a" ] ; then
+    pushd $NCURSES_SRC > /dev/null
+    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared --includedir="$NDK_ADDON_PREFIX/include" --without-manpages
+    echo '#undef HAVE_LOCALE_H' >> "$NCURSES_SRC/include/ncurses_cfg.h"   # TMP hack
+    make $MAKE_OPTS
+    make install
+    popd > /dev/null
+fi
+
+if ! [ -d "$GHC_DIR" ] ; then
+    # Checkout GHC
+    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_DIR"
+    apply_patches 'ghc-*' "$GHC_DIR"
+    pushd "$GHC_DIR" > /dev/null
+    ./sync-all --no-dph get $MIRROR_OPT
+
+    # Setup build.mk
+    echo "BuildFlavour = quick" > mk/build.mk
+    cat mk/build.mk.sample >> mk/build.mk
+    echo "Stage1Only = YES" >> mk/build.mk
+    echo "INTEGER_LIBRARY = integer-simple" >> mk/build.mk
+
+    # Update config.sub and config.guess
+    for x in $(find . -name "config.sub") ; do
+        dir=$(dirname $x)
+        cp -v "$CONFIG_SUB_SRC/config.sub" "$dir"
+        cp -v "$CONFIG_SUB_SRC/config.guess" "$dir"
+    done
+
+    # Apply library patches
+    apply_patches "hsc2hs-*" "$GHC_DIR/utils/hsc2hs"
+    apply_patches "haskeline-*" "$GHC_DIR/libraries/haskeline"
+    apply_patches "unix-*" "$GHC_DIR/libraries/unix"
+
+    # Configure
+    perl boot
+    ./configure --prefix="$GHC_PREFIX" --target=$NDK_TARGET
+    popd > /dev/null
+fi
+
+pushd "$GHC_DIR" > /dev/null
+make $MAKE_OPTS
+popd > /dev/null

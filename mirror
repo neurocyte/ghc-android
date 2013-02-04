@@ -1,0 +1,47 @@
+#!/bin/bash
+set -x
+set -e
+
+OTHER="$1"
+
+if ! [ -d "$OTHER" ] ; then
+    echo usage: $0 {existing git checkout dir}
+    exit 1
+else
+    pushd "$OTHER" > /dev/null
+    OTHER="$(pwd)"
+    popd > /dev/null
+fi
+
+# Basedir configuration
+BASEDIR="$(dirname $0)"
+cd "$BASEDIR"
+BASEDIR="$(pwd)"
+MIRROR="$BASEDIR/mirror.git"
+
+if ! [ -e "$MIRROR" ] ; then
+    git init --bare "$MIRROR"
+fi
+
+function mirror_repo() {
+    URL="$1"
+    REPONAME="$2"
+    git --git-dir "$MIRROR" config --unset remote.${REPONAME}.uri || true
+    git --git-dir "$MIRROR" config remote.${REPONAME}.url "$URL"
+    git --git-dir "$MIRROR" config --unset remote.${REPONAME}.fetch || true
+    git --git-dir "$MIRROR" config --add remote.${REPONAME}.fetch "+refs/heads/*:refs/heads/${REPONAME}/*"
+    git --git-dir "$MIRROR" config --add remote.${REPONAME}.fetch "+refs/tags/*:refs/tags/${REPONAME}/*"
+    git --git-dir "$MIRROR" config remote.${REPONAME}.tagopt "--no-tag"
+    git --git-dir "$MIRROR" fetch "$REPONAME"
+}
+
+for gitdir in $(find "$OTHER" -name .git) ; do
+    OTHER_URL="$(git --git-dir "$gitdir" config remote.origin.url)"
+    REPONAME="$(basename -s .git "$OTHER_URL")"
+    mirror_repo "$gitdir" "$REPONAME"
+    mirror_repo "$OTHER_URL" "$REPONAME"
+done
+
+mirror_repo "https://github.com/ironsteel/iconv-android.git" "iconv"
+
+git --git-dir "$MIRROR" gc --aggressive

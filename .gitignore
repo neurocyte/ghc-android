@@ -1,0 +1,5 @@
+/android-ndk-*
+/ghc-*
+/toolchain-*
+/tarfiles
+/mirror.git

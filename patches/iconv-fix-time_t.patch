@@ -1,0 +1,77 @@
+diff --git a/src/iconv.c b/src/iconv.c
+index 4bd4121..b49bc54 100644
+--- a/src/iconv.c
++++ b/src/iconv.c
+@@ -19,6 +19,7 @@
+ # define ICONV_CONST
+ #endif
+ 
++#include <stdint.h>
+ #include <limits.h>
+ #include <stddef.h>
+ #include <stdio.h>
+diff --git a/srclib/areadlink.c b/srclib/areadlink.c
+index 4e770eb..445cdba 100644
+--- a/srclib/areadlink.c
++++ b/srclib/areadlink.c
+@@ -21,6 +21,8 @@
+ 
+ #include <config.h>
+ 
++#include <sys/types.h>
++
+ /* Specification.  */
+ #include "areadlink.h"
+ 
+diff --git a/srclib/error.c b/srclib/error.c
+index 3177bd5..aebfb21 100644
+--- a/srclib/error.c
++++ b/srclib/error.c
+@@ -23,6 +23,7 @@
+ 
+ #include "error.h"
+ 
++#include <stdint.h>
+ #include <stdarg.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/srclib/stdint.in.h b/srclib/stdint.in.h
+index 53aa34a..3ac1ed0 100644
+--- a/srclib/stdint.in.h
++++ b/srclib/stdint.in.h
+@@ -29,6 +29,16 @@
+    <inttypes.h>.  */
+ #define _GL_JUST_INCLUDE_SYSTEM_INTTYPES_H
+ 
++/* On Android (Bionic libc), <sys/types.h> includes this file before
++   having defined 'time_t'.  Therefore in this case avoid including
++   other system header files; just include the system's <stdint.h>.
++   Ideally we should test __BIONIC__ here, but it is only defined after
++   <sys/cdefs.h> has been included; hence test __ANDROID__ instead.  */
++#if defined __ANDROID__ \
++    && defined _SYS_TYPES_H_ && !defined _SSIZE_T_DEFINED_
++# @INCLUDE_NEXT@ @NEXT_STDINT_H@
++#else
++
+ /* Get those types that are already defined in other system include
+    files, so that we can "#define int8_t signed char" below without
+    worrying about a later system include file containing a "typedef
+@@ -564,4 +574,5 @@ typedef int _verify_intmax_size[2 * (sizeof (intmax_t) == sizeof (uintmax_t)) -
+ #endif /* !defined __cplusplus || defined __STDC_CONSTANT_MACROS */
+ 
+ #endif /* _GL_STDINT_H */
++#endif /* !(defined __ANDROID__ && ...) */
+ #endif /* !defined _GL_STDINT_H && !defined _GL_JUST_INCLUDE_SYSTEM_STDINT_H */
+diff --git a/srclib/xstrdup.c b/srclib/xstrdup.c
+index 9ad1b94..10838eb 100644
+--- a/srclib/xstrdup.c
++++ b/srclib/xstrdup.c
+@@ -16,6 +16,8 @@
+ 
+ #include <config.h>
+ 
++#include <sys/types.h>
++
+ /* Specification.  */
+ #include "xalloc.h"
+ 

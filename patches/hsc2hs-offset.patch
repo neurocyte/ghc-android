@@ -1,0 +1,50 @@
+From a6c750e564d0365f84df2caa657cbb1673339d8e Mon Sep 17 00:00:00 2001
+From: Nathan <nathan.huesken@posteo.de>
+Date: Sun, 13 Jan 2013 13:31:54 +0100
+Subject: [PATCH] on android offsetof cannot be used as constant (when
+ termios.h is included)
+
+---
+ CrossCodegen.hs |   16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/CrossCodegen.hs b/CrossCodegen.hs
+index 7fbd20a..af44e64 100644
+--- a/CrossCodegen.hs
++++ b/CrossCodegen.hs
+@@ -208,13 +208,13 @@ outputSpecial :: (String -> TestMonad ()) -> ZCursor Token -> TestMonad ()
+ outputSpecial output (z@ZCursor {zCursor=Special pos@(SourcePos file line)  key value}) =
+     case key of
+        "const" -> outputConst value show
+-       "offset" -> outputConst ("offsetof(" ++ value ++ ")") (\i -> "(" ++ show i ++ ")")
++       "offset" -> outputConst ("__builtin_offsetof(" ++ value ++ ")") (\i -> "(" ++ show i ++ ")")
+        "size" -> outputConst ("sizeof(" ++ value ++ ")") (\i -> "(" ++ show i ++ ")")
+-       "peek" -> outputConst ("offsetof(" ++ value ++ ")")
++       "peek" -> outputConst ("__builtin_offsetof(" ++ value ++ ")")
+                              (\i -> "(\\hsc_ptr -> peekByteOff hsc_ptr " ++ show i ++ ")")
+-       "poke" -> outputConst ("offsetof(" ++ value ++ ")")
++       "poke" -> outputConst ("__builtin_offsetof(" ++ value ++ ")")
+                              (\i -> "(\\hsc_ptr -> pokeByteOff hsc_ptr " ++ show i ++ ")")
+-       "ptr" -> outputConst ("offsetof(" ++ value ++ ")")
++       "ptr" -> outputConst ("__builtin_offsetof(" ++ value ++ ")")
+                             (\i -> "(\\hsc_ptr -> hsc_ptr `plusPtr` " ++ show i ++ ")")
+        "type" -> computeType z >>= output
+        "enum" -> computeEnum z >>= output
+@@ -272,11 +272,11 @@ outValidityCheck :: Token -> Int -> String
+ outValidityCheck s@(Special pos key value) uniq =
+     case key of
+        "const" -> checkValidConst value
+-       "offset" -> checkValidConst ("offsetof(" ++ value ++ ")")
++       "offset" -> checkValidConst ("__builtin_offsetof(" ++ value ++ ")")
+        "size" -> checkValidConst ("sizeof(" ++ value ++ ")")
+-       "peek" -> checkValidConst ("offsetof(" ++ value ++ ")")
+-       "poke" -> checkValidConst ("offsetof(" ++ value ++ ")")
+-       "ptr" -> checkValidConst ("offsetof(" ++ value ++ ")")
++       "peek" -> checkValidConst ("__builtin_offsetof(" ++ value ++ ")")
++       "poke" -> checkValidConst ("__builtin_offsetof(" ++ value ++ ")")
++       "ptr" -> checkValidConst ("__builtin_offsetof(" ++ value ++ ")")
+        "type" -> checkValidType 
+        "enum" -> checkValidEnum
+        _ -> outHeaderCProg' s
+-- 
+1.7.10.4

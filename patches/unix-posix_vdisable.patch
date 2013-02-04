@@ -1,0 +1,22 @@
+diff --git a/System/Posix/Terminal/Common.hsc b/System/Posix/Terminal/Common.hsc
+index 5d718a8..9d077bf 100644
+--- a/System/Posix/Terminal/Common.hsc
++++ b/System/Posix/Terminal/Common.hsc
+@@ -272,7 +272,7 @@ controlChar termios cc = unsafePerformIO $ do
+   withTerminalAttributes termios $ \p -> do
+     let c_cc = (#ptr struct termios, c_cc) p
+     val <- peekElemOff c_cc (cc2Word cc)
+-    if val == ((#const _POSIX_VDISABLE)::CCc)
++    if val == ((#const '\0')::CCc)
+        then return Nothing
+        else return (Just (chr (fromEnum val)))
+   
+@@ -290,7 +290,7 @@ withoutCC :: TerminalAttributes
+ withoutCC termios cc = unsafePerformIO $ do
+   withNewTermios termios $ \p -> do
+     let c_cc = (#ptr struct termios, c_cc) p
+-    pokeElemOff c_cc (cc2Word cc) ((#const _POSIX_VDISABLE) :: CCc)
++    pokeElemOff c_cc (cc2Word cc) ((#const '\0') :: CCc)
+ 
+ inputTime :: TerminalAttributes -> Int
+ inputTime termios = unsafePerformIO $ do

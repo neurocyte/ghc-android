@@ -170,6 +170,6 @@ if ! [ -d "$GHC_DIR" ] ; then
 fi
 
 pushd "$GHC_DIR" > /dev/null
-make $MAKEFLAGS
+make $MAKEFLAGS || true # TMP hack, see http://hackage.haskell.org/trac/ghc/ticket/7490
 make $MAKEFLAGS
 popd > /dev/null

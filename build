@@ -37,7 +37,7 @@ NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
 
 CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.13}
 
-MAKE_OPTS=${MAKE_OPTS:--j6}
+MAKE_OPTS=${MAKE_OPTS:--j12}
 BUILD_GCC=gcc
 BUILD_ARCH=$($BUILD_GCC -v 2>&1 | grep ^Target: | cut -f 2 -d ' ')
 
@@ -168,5 +168,6 @@ if ! [ -d "$GHC_DIR" ] ; then
 fi
 
 pushd "$GHC_DIR" > /dev/null
+make $MAKE_OPTS
 make $MAKE_OPTS
 popd > /dev/null

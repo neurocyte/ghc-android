@@ -28,15 +28,19 @@ else
     NDK_TARGET=${NDK_TARGET:-arm-linux-androideabi}
 fi
 
-NDK="$BASEDIR/toolchain-$NDK_PLATFORM-$NDK_TOOLCHAIN"
+NDK_DESC=$NDK_PLATFORM-$NDK_TOOLCHAIN
+NDK="$BASEDIR/toolchain-$NDK_DESC"
 NDK_ADDON_SRC="$NDK/src"
 NDK_ADDON_PREFIX="$NDK/sysroot/usr"
 
-GHC_DIR="$BASEDIR/ghc-$NDK_PLATFORM-$NDK_TOOLCHAIN"
-GHC_PREFIX="$HOME/.ghc-$NDK_PLATFORM-$NDK_TOOLCHAIN"
+GHC_DIR="$BASEDIR/ghc-$NDK_DESC"
+GHC_PREFIX="$HOME/.ghc-$NDK_DESC"
 
 NCURSES_RELEASE=5.9
 NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
+
+GMP_RELEASE=5.1.0
+GMP_MD5=69fd511e435f81a0334f14f00c7d77b3
 
 CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.13}
 
@@ -138,6 +142,26 @@ if ! [ -e "$NDK_ADDON_PREFIX/lib/libncurses.a" ] ; then
     popd > /dev/null
 fi
 
+# Build and install gmp
+GMP_TAR_FILE=gmp-${GMP_RELEASE}.tar.xz
+GMP_TAR_PATH="${TARDIR}/${GMP_TAR_FILE}"
+GMP_SRC="$NDK_ADDON_SRC/gmp-${GMP_RELEASE}"
+if ! [ -d "$GMP_SRC" ] ; then
+    if ! check_md5 "$GMP_TAR_PATH" "$GMP_MD5" ; then
+        echo Downloading gmp $GMP_RELEASE
+        curl -o "${TARDIR}/${GMP_TAR_FILE}"  ftp://ftp.gmplib.org/pub/gmp-${GMP_RELEASE}/${GMP_TAR_FILE}
+        check_md5 "$GMP_TAR_PATH" "$GMP_MD5"
+    fi
+    (cd $NDK_ADDON_SRC; tar xf "$TARDIR/$GMP_TAR_FILE")
+fi
+if ! [ -e "$NDK_ADDON_PREFIX/lib/libgmp.a" ] ; then
+    pushd $GMP_SRC > /dev/null
+    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
+    make $MAKEFLAGS
+    make install
+    popd > /dev/null
+fi
+
 if ! [ -d "$GHC_DIR" ] ; then
     # Checkout GHC
     git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_DIR"
@@ -149,7 +173,6 @@ if ! [ -d "$GHC_DIR" ] ; then
     echo "BuildFlavour = quick" > mk/build.mk
     cat mk/build.mk.sample >> mk/build.mk
     echo "Stage1Only = YES" >> mk/build.mk
-    echo "INTEGER_LIBRARY = integer-simple" >> mk/build.mk
 
     # Update config.sub and config.guess
     for x in $(find . -name "config.sub") ; do
@@ -170,7 +193,26 @@ if ! [ -d "$GHC_DIR" ] ; then
 fi
 
 pushd "$GHC_DIR" > /dev/null
+
+function check_install_gmp_constants() {
+    if ! [ -e "libraries/integer-gmp/cbits/GmpDerivedConstants.h" ] ; then
+        if [ -e "libraries/integer-gmp/cbits/mkGmpDerivedConstants" ] ; then
+            if [ -e "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" ] ; then
+                cp -v "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" "libraries/integer-gmp/cbits/GmpDerivedConstants.h"
+            else
+                echo \#\#\# Execute the following commands to generate a GmpDerivedConstants.h for your target, then run build again:
+                echo \#\#\# adb push ghc-$NDK_DESC/libraries/integer-gmp/cbits/mkGmpDerivedConstants /data/local
+                echo \#\#\# adb shell /data/local/mkGmpDerivedConstants \> $BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h
+                echo \#\#\# adb shell rm /data/local/mkGmpDerivedConstants
+                exit 1
+            fi
+        fi
+    fi
+}
+
 make $MAKEFLAGS || true # TMP hack, see http://hackage.haskell.org/trac/ghc/ticket/7490
+make $MAKEFLAGS || true # TMP hack, target mkGmpDerivedConstants fails on build host
+check_install_gmp_constants
 make $MAKEFLAGS
 make install
 popd > /dev/null

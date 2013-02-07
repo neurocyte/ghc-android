@@ -30,12 +30,12 @@ else
 fi
 
 NDK_DESC=$NDK_PLATFORM-$NDK_TOOLCHAIN
-NDK="$BASEDIR/toolchain-$NDK_DESC"
-NDK_ADDON_SRC="$NDK/src"
+NDK="$GHCHOME/$NDK_PLATFORM/$NDK_TOOLCHAIN"
+NDK_ADDON_SRC="$BASEDIR/build-$NDK_DESC"
 NDK_ADDON_PREFIX="$NDK/sysroot/usr"
 
-GHC_DIR="$BASEDIR/ghc-$NDK_DESC"
-GHC_PREFIX="$HOME/.ghc-$NDK_DESC"
+GHC_PREFIX="$NDK"
+GHC_SRC="$NDK_ADDON_SRC/ghc"
 
 NCURSES_RELEASE=5.9
 NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
@@ -48,6 +48,8 @@ CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.13}
 BUILD_GCC=gcc
 BUILD_ARCH=$($BUILD_GCC -v 2>&1 | grep ^Target: | cut -f 2 -d ' ')
 
+mkdir -p "$GHCHOME"
+mkdir -p "$NDK_ADDON_SRC"
 mkdir -p "${BASEDIR}/tarfiles"
 TARDIR="${BASEDIR}/tarfiles"
 
@@ -83,7 +85,6 @@ if ! [ -d "$NDK" ] ; then
     fi
     echo Preparing the Android NDK toolchain in $NDK
     "$NDK_PATH/build/tools/make-standalone-toolchain.sh" --toolchain=$NDK_TOOLCHAIN --platform=$NDK_PLATFORM --install-dir="$NDK"
-    mkdir -p "$NDK_ADDON_SRC"
 
     #TMP hack, fake pthread library for ghc linker
     pushd "$NDK_ADDON_PREFIX/lib" > /dev/null
@@ -163,11 +164,11 @@ if ! [ -e "$NDK_ADDON_PREFIX/lib/libgmp.a" ] ; then
     popd > /dev/null
 fi
 
-if ! [ -d "$GHC_DIR" ] ; then
+if ! [ -d "$GHC_SRC" ] ; then
     # Checkout GHC
-    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_DIR"
-    apply_patches 'ghc-*' "$GHC_DIR"
-    pushd "$GHC_DIR" > /dev/null
+    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_SRC"
+    apply_patches 'ghc-*' "$GHC_SRC"
+    pushd "$GHC_SRC" > /dev/null
     ./sync-all --no-dph get $MIRROR_OPT
 
     # Setup build.mk
@@ -183,9 +184,9 @@ if ! [ -d "$GHC_DIR" ] ; then
     done
 
     # Apply library patches
-    apply_patches "hsc2hs-*" "$GHC_DIR/utils/hsc2hs"
-    apply_patches "haskeline-*" "$GHC_DIR/libraries/haskeline"
-    apply_patches "unix-*" "$GHC_DIR/libraries/unix"
+    apply_patches "hsc2hs-*" "$GHC_SRC/utils/hsc2hs"
+    apply_patches "haskeline-*" "$GHC_SRC/libraries/haskeline"
+    apply_patches "unix-*" "$GHC_SRC/libraries/unix"
 
     # Configure
     perl boot
@@ -193,7 +194,7 @@ if ! [ -d "$GHC_DIR" ] ; then
     popd > /dev/null
 fi
 
-pushd "$GHC_DIR" > /dev/null
+pushd "$GHC_SRC" > /dev/null
 
 function check_install_gmp_constants() {
     if ! [ -e "libraries/integer-gmp/cbits/GmpDerivedConstants.h" ] ; then

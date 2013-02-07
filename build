@@ -95,7 +95,7 @@ NCURSES_TAR_PATH="${TARDIR}/${NCURSES_TAR_FILE}"
 NCURSES_SRC="$NDK_ADDON_SRC/ncurses-${NCURSES_RELEASE}"
 if ! [ -d "$NCURSES_SRC" ] ; then
     if ! check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5" ; then
-        echo Downloading the ncurses $NDK_RELEASE
+        echo Downloading ncurses $NCURSES_RELEASE
         curl -o "${TARDIR}/${NCURSES_TAR_FILE}"  http://ftp.gnu.org/pub/gnu/ncurses/${NCURSES_TAR_FILE}
         check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5"
     fi

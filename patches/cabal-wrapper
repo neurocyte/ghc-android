@@ -1,0 +1,18 @@
+NDK=$HOME/.ghc/android-14/x86-4.7
+BINDIR=$NDK/$TARGET/bin
+PKGDB=$(echo $NDK/lib/ghc-*)/package.conf.d
+export HOME=$NDK
+
+mkdir -p $NDK/cabal
+[ -e "$NDK/.cabal" ] || ln -s $NDK/cabal $NDK/.cabal
+
+if [ "$1" == "install" ] ; then
+    exec /usr/bin/cabal \
+        --with-ghc=$BINDIR/ghc \
+        --with-ghc-pkg=$BINDIR/ghc-pkg \
+        --with-ld=$BINDIR/ld \
+        --package-db=$PKGDB \
+        "$@"
+else
+    exec /usr/bin/cabal "$@"
+fi

@@ -218,3 +218,22 @@ check_install_gmp_constants
 make $MAKEFLAGS
 make install
 popd > /dev/null
+
+# Add target bindir links
+function bindir_link() {
+    [ -e $GHC_PREFIX/$NDK_TARGET/bin/$1 ] || \
+        ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1
+}
+bindir_link ghc
+bindir_link ghc-pkg
+bindir_link hp2ps
+#bindir_link hsc2hs  <- Broken, built for target, not host
+[ -e $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs ] || \
+    ln -s $(which hsc2hs) $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs
+
+
+# Write cabal wrapper
+echo \#/bin/bash > "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
+echo TARGET=$NDK_TARGET >> "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
+cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
+chmod +x "$GHC_PREFIX/$NDK_TARGET/bin/cabal"

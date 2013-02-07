@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 set -e
 
 [ -e /etc/makepkg.conf ] && source /etc/makepkg.conf

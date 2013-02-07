@@ -5,13 +5,14 @@ set -e
 [ -e /etc/makepkg.conf ] && source /etc/makepkg.conf
 MAKEFLAGS=${MAKEFLAGS:--j6}
 
-# Basedir configuration
+# Basic configuration
+GHCHOME=$HOME/.ghc
 BASEDIR="$(dirname $0)"
 cd "$BASEDIR"
 BASEDIR="$(pwd)"
 if [ -z "$MIRROR_OPT" ] ; then
-    if [ -d "$BASEDIR/mirror.git" ] ; then
-        MIRROR_OPT="--reference $BASEDIR/mirror.git"
+    if [ -d "$GHCHOME/mirror.git" ] ; then
+        MIRROR_OPT="--reference $GHCHOME/mirror.git"
     fi
 fi
 

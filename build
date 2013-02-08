@@ -227,10 +227,10 @@ function bindir_link() {
 bindir_link ghc
 bindir_link ghc-pkg
 bindir_link hp2ps
-#bindir_link hsc2hs  <- Broken, built for target, not host
 [ -e $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs ] || \
-    ln -s $(which hsc2hs) $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs
-
+    (echo \#/bin/bash > $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs && \
+    echo 'exec /usr/bin/hsc2hs "$@" --cross-compile' >> $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs && \
+    chmod +x $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs)
 
 # Write cabal wrapper
 echo \#/bin/bash > "$GHC_PREFIX/$NDK_TARGET/bin/cabal"

@@ -10,13 +10,30 @@ tarfiles directory and the build script will reuse it. If you already
 have a ghc clone, you can use the mirror script to avoid doing a full
 re-download during cloning.
 
+Before starting a build you will need a working gcc, git and (at least
+for arm builds) llvm-3.2 on the build host.
+
 To build a ghc-android compiler execute:
 
     ./build
 
-By default this should give you a
-ghc-android-14-arm-linux-androideabi-4.7 compiler. You can change
-various variables via the environment to give you other
+By default this should give you a android-14 arm-linux-androideabi-4.7
+compiler at:
+
+    ~/.ghc/android-14/arm-linux-androideabi-4.7/bin
+
+Add this directory to your PATH to use the cross compiler with the
+full target prefix.
+
+Or add:
+
+    ~/.ghc/android-14/arm-linux-androideabi-4.7/arm-linux-androideabi/bin
+
+to your PATH to use it without prefixes. There is also a cabal wrapper
+script in this directory that will cross compile packages with cable
+and add them to the ghc package-db.
+
+You can change various variables via the environment to give you other
 configurations.
 
 There is also a pre-configured x86 variation you can build like this:
@@ -33,7 +50,7 @@ This will build a mirror that will automatically be used by the build
 script to speed up cloning.
 
 The following configurations have been tested on an up-to-date Arch
-Linux install and are know to work:
+Linux install and are known to work:
 
     * ghc-android-14-arm-linux-androideabi-4.7
     * ghc-android-14-x86-4.7

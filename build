@@ -227,13 +227,16 @@ function bindir_link() {
 bindir_link ghc
 bindir_link ghc-pkg
 bindir_link hp2ps
-[ -e $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs ] || \
-    (echo \#/bin/bash > $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs && \
-    echo 'exec /usr/bin/hsc2hs "$@" --cross-compile' >> $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs && \
-    chmod +x $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs)
+echo \#/bin/bash > $GHC_PREFIX/bin/hsc2hs
+echo 'exec /usr/bin/hsc2hs "$@" --cross-compile' >> $GHC_PREFIX/bin/hsc2hs
+chmod +x $GHC_PREFIX/bin/hsc2hs
+[ -e $GHC_PREFIX/$NKD_TARGET/bin/hsc2hs ] || \
+    ln -s $GHC_PREFIX/bin/hsc2hs $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs
 
 # Write cabal wrapper
-echo \#/bin/bash > "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
-echo TARGET=$NDK_TARGET >> "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
-cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
-chmod +x "$GHC_PREFIX/$NDK_TARGET/bin/cabal"
+echo \#/bin/bash > "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+echo NDK=$GHC_PREFIX >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+chmod +x "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+[ -e $GHC_PREFIX/$NDK_TARGET/bin/cabal ] || \
+    ln -s $GHC_PREFIX/bin/$NDK_TARGET-cabal $GHC_PREFIX/$NDK_TARGET/bin/cabal

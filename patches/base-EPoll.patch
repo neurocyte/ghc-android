@@ -1,0 +1,13 @@
+diff --git a/GHC/Event/EPoll.hsc b/GHC/Event/EPoll.hsc
+index c7a7662..36bd8ca 100644
+--- a/GHC/Event/EPoll.hsc
++++ b/GHC/Event/EPoll.hsc
+@@ -169,7 +169,7 @@ newtype EventType = EventType {
+  , epollOut = EPOLLOUT
+  , epollErr = EPOLLERR
+  , epollHup = EPOLLHUP
+- , epollOneShot = EPOLLONESHOT              
++ , epollOneShot = 0x40000000
+  }
+ 
+ -- | Create a new epoll context, returning a file descriptor associated with the context.

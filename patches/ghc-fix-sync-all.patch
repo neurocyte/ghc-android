@@ -1,30 +1,30 @@
 diff --git a/sync-all b/sync-all
-index 889f124..3f7ea64 100755
+index 71d707e..ed5966d 100755
 --- a/sync-all
 +++ b/sync-all
-@@ -779,23 +779,10 @@ sub main {
+@@ -790,23 +790,10 @@ sub main {
  
-         scmall ($command, @_);
+         &gitall($command, @_);
  
 -        my @submodule_args = grep(/^-q/,@_);
 +        my @submodule_args = @_;
  
 -        if ($command eq "get") {
--            &scm(".", "git", "submodule", "init", @submodule_args);
+-            &git(".", "submodule", "init", @submodule_args);
 -        }
 -        if ($command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &scm(".", "git", "submodule", "init", @submodule_args);
+-                &git(".", "submodule", "init", @submodule_args);
 -            }
 -        }
          if ($command eq "get" or $command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &scm(".", "git", "submodule", "init", @submodule_args);
+-                &git(".", "submodule", "init", @submodule_args);
 -            }
--            &scm(".", "git", "submodule", "update", @submodule_args);
-+            &scm(".", "git", "submodule", "update", "--init", @submodule_args);
+-            &git(".", "submodule", "update", @submodule_args);
++            &git(".", "submodule", "update", "--init", @submodule_args);
          }
      }
  }

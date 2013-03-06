@@ -219,24 +219,26 @@ make $MAKEFLAGS
 make install
 popd > /dev/null
 
-# Add target bindir links
-function bindir_link() {
-    [ -e $GHC_PREFIX/$NDK_TARGET/bin/$1 ] || \
-        ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1
-}
-bindir_link ghc
-bindir_link ghc-pkg
-bindir_link hp2ps
-echo \#/bin/bash > $GHC_PREFIX/bin/hsc2hs
-echo 'exec /usr/bin/hsc2hs "$@" --cross-compile' >> $GHC_PREFIX/bin/hsc2hs
-chmod +x $GHC_PREFIX/bin/hsc2hs
-[ -e $GHC_PREFIX/$NKD_TARGET/bin/hsc2hs ] || \
-    ln -s $GHC_PREFIX/bin/hsc2hs $GHC_PREFIX/$NDK_TARGET/bin/hsc2hs
+# Write hsc2hs wrapper
+HSC2HS_TARGET=$(ls $GHC_PREFIX/bin/*-hsc2hs)
+echo \#/bin/bash > $HSC2HS_TARGET
+echo 'exec /usr/bin/hsc2hs --cross-compile "$@" --define=linux_android_HOST_OS=1' >> $HSC2HS_TARGET
+chmod +x $HSC2HS_TARGET
 
 # Write cabal wrapper
 echo \#/bin/bash > "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 echo NDK=$GHC_PREFIX >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 chmod +x "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-[ -e $GHC_PREFIX/$NDK_TARGET/bin/cabal ] || \
-    ln -s $GHC_PREFIX/bin/$NDK_TARGET-cabal $GHC_PREFIX/$NDK_TARGET/bin/cabal
+
+# Add target bindir links
+function bindir_link() {
+    [ -e $GHC_PREFIX/$NDK_TARGET/bin/$1 ] || \
+        (echo ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1 ;\
+        ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1)
+}
+bindir_link ghc
+bindir_link ghc-pkg
+bindir_link hp2ps
+bindir_link hsc2hs
+bindir_link cabal

@@ -1,17 +1,21 @@
 BIN_GHC=$(ls $NDK/bin/*-ghc)
+BIN_HSC2HS=$(ls $NDK/bin/*-hsc2hs)
 BIN_LD=$(ls $NDK/bin/*-ld)
+CC=$(ls $NDK/bin/*-gcc)
 PKGDB=$(echo $NDK/lib/ghc-*)/package.conf.d
 export HOME=$NDK
 
 mkdir -p $NDK/cabal
 [ -e "$NDK/.cabal" ] || ln -s $NDK/cabal $NDK/.cabal
 
-if [ "$1" = "install" ] || [ "$1" = configure ] ; then
+if [ "$1" = install ] || [ "$1" = configure ] ; then
     exec /usr/bin/cabal \
         --with-compiler=$BIN_GHC \
+        --with-gcc=$CC \
         --with-ghc=$BIN_GHC \
         --with-ghc-pkg=$BIN_GHC-pkg \
         --with-ld=$BIN_LD \
+        --with-hsc2hs=$BIN_HSC2HS \
         --package-db=$PKGDB \
         "$@"
 else

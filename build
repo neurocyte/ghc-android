@@ -187,6 +187,7 @@ if ! [ -d "$GHC_SRC" ] ; then
     apply_patches "hsc2hs-*" "$GHC_SRC/utils/hsc2hs"
     apply_patches "haskeline-*" "$GHC_SRC/libraries/haskeline"
     apply_patches "unix-*" "$GHC_SRC/libraries/unix"
+    apply_patches "base-*" "$GHC_SRC/libraries/base"
 
     # Configure
     perl boot

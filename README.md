@@ -45,6 +45,14 @@ a local mirror repo to speed up subsequent ghc clones. To build a
 mirror run:
 
     ./mirror {path to existing ghc clone}
+    
+During ./build the GHC repo is cloned into appropriate path, e.g.:
+
+    ./build-android-14-arm-linux-androideabi-4.7/ghc
+    
+So the mirror path can become this:
+
+    ./mirror build-android-14-arm-linux-androideabi-4.7/ghc
 
 This will build a mirror that will automatically be used by the build
 script to speed up cloning.

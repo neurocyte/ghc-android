@@ -18,7 +18,7 @@ fi
 
 # Basic parameters
 NDK_RELEASE=${NDK_RELEASE:-r8e}
-NDK_MD5=e1fa0379a3feb59f2f0865f1a90bd382
+NDK_MD5=26d774b0884bcd98de08eb4de41ab532
 NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 
 if [ "x$1" == "x--x86" ] ; then

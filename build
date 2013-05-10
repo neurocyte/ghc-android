@@ -17,7 +17,7 @@ if [ -z "$MIRROR_OPT" ] ; then
 fi
 
 # Basic parameters
-NDK_RELEASE=${NDK_RELEASE:-r8d}
+NDK_RELEASE=${NDK_RELEASE:-r8e}
 NDK_MD5=e1fa0379a3feb59f2f0865f1a90bd382
 NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 

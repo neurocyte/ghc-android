@@ -200,17 +200,16 @@ fi
 pushd "$GHC_SRC" > /dev/null
 
 function check_install_gmp_constants() {
-    if ! [ -e "libraries/integer-gmp/cbits/GmpDerivedConstants.h" ] ; then
-        if [ -e "libraries/integer-gmp/cbits/mkGmpDerivedConstants" ] ; then
-            if [ -e "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" ] ; then
-                cp -v "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" "libraries/integer-gmp/cbits/GmpDerivedConstants.h"
-            else
-                echo \#\#\# Execute the following commands to generate a GmpDerivedConstants.h for your target, then run build again:
-                echo \#\#\# adb push ghc-$NDK_DESC/libraries/integer-gmp/cbits/mkGmpDerivedConstants /data/local
-                echo \#\#\# adb shell /data/local/mkGmpDerivedConstants \> $BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h
-                echo \#\#\# adb shell rm /data/local/mkGmpDerivedConstants
-                exit 1
-            fi
+    GMPDCHDR="libraries/integer-gmp/mkGmpDerivedConstants/dist/GmpDerivedConstants.h"
+    if ! [ -e  "$GMPDCHDR" ] ; then
+        if [ -e "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" ] ; then
+            cp -v "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" "$GMPDCHDR"
+        else
+            echo \#\#\# Execute the following commands to generate a GmpDerivedConstants.h for your target, then run build again:
+            echo \#\#\# adb push ghc-$NDK_DESC/libraries/integer-gmp/cbits/mkGmpDerivedConstants /data/local
+            echo \#\#\# adb shell /data/local/mkGmpDerivedConstants \> $BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h
+            echo \#\#\# adb shell rm /data/local/mkGmpDerivedConstants
+            exit 1
         fi
     fi
 }

@@ -10,8 +10,10 @@ tarfiles directory and the build script will reuse it. If you already
 have a ghc clone, you can use the mirror script to avoid doing a full
 re-download during cloning.
 
-Before starting a build you will need a working gcc, git and (at least
-for arm builds) llvm-3.2 on the build host.
+Before starting a build you will need a working gcc, git, happy, alex
+and (at least for arm builds) llvm-3.2 on the build host. You will also
+need enough 32 bit support to run the Android NDK compiler. Usually
+just glibc, libstdc++ and zlib should be enough.
 
 To build a ghc-android compiler execute:
 

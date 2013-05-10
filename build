@@ -175,6 +175,8 @@ if ! [ -d "$GHC_SRC" ] ; then
     echo "BuildFlavour = quick" > mk/build.mk
     cat mk/build.mk.sample >> mk/build.mk
     echo "Stage1Only = YES" >> mk/build.mk
+    echo "DYNAMIC_GHC_PROGRAMS = NO" >> mk/build.mk
+    echo "GhcLibWays = v" >> mk/build.mk
 
     # Update config.sub and config.guess
     for x in $(find . -name "config.sub") ; do

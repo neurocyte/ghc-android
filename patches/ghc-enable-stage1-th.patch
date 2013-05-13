@@ -1,0 +1,37 @@
+diff --git a/compiler/ghc.mk b/compiler/ghc.mk
+index 1a032cc..29505df 100644
+--- a/compiler/ghc.mk
++++ b/compiler/ghc.mk
+@@ -299,6 +299,7 @@ compiler_stage2_CONFIGURE_OPTS += --flags=ncg
+ endif
+ 
+ ifeq "$(GhcWithInterpreter)" "YES"
++compiler_stage1_CONFIGURE_OPTS += --flags=ghci
+ compiler_stage2_CONFIGURE_OPTS += --flags=ghci
+ 
+ ifeq "$(GhcEnableTablesNextToCode) $(GhcUnregisterised)" "YES NO"
+diff --git a/ghc.mk b/ghc.mk
+index eaee872..f9c95a8 100644
+--- a/ghc.mk
++++ b/ghc.mk
+@@ -362,6 +362,7 @@ PACKAGES_STAGE0 = Cabal/Cabal hpc bin-package-db hoopl transformers
+ ifeq "$(Windows_Host)" "NO"
+ ifneq "$(HostOS_CPP)" "ios"
+ PACKAGES_STAGE0 += terminfo
++PACKAGES_STAGE0 += template-haskell
+ endif
+ endif
+ 
+diff --git a/mk/config.mk.in b/mk/config.mk.in
+index 5ef1f5c..95cbe5c 100644
+--- a/mk/config.mk.in
++++ b/mk/config.mk.in
+@@ -178,7 +178,7 @@ GhcWithSMP := $(strip $(if $(filter YESNO, $(ArchSupportsSMP)$(GhcUnregisterised
+ # Whether to include GHCi in the compiler.  Depends on whether the RTS linker
+ # has support for this OS/ARCH combination.
+ 
+-OsSupportsGHCi=$(strip $(patsubst $(TargetOS_CPP), YES, $(findstring $(TargetOS_CPP), mingw32 cygwin32 linux solaris2 freebsd dragonfly netbsd openbsd darwin kfreebsdgnu)))
++OsSupportsGHCi=$(strip $(patsubst $(TargetOS_CPP), YES, $(findstring $(TargetOS_CPP), mingw32 cygwin32 linux linux_android solaris2 freebsd dragonfly netbsd openbsd darwin kfreebsdgnu)))
+ ArchSupportsGHCi=$(strip $(patsubst $(TargetArch_CPP), YES, $(findstring $(TargetArch_CPP), i386 x86_64 powerpc sparc sparc64 arm)))
+ 
+ ifeq "$(OsSupportsGHCi)$(ArchSupportsGHCi)" "YESYES"

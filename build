@@ -34,6 +34,10 @@ NDK="$GHCHOME/$NDK_PLATFORM/$NDK_TOOLCHAIN"
 NDK_ADDON_SRC="$BASEDIR/build-$NDK_DESC"
 NDK_ADDON_PREFIX="$NDK/sysroot/usr"
 
+GHC_STAGE0_SRC="$BASEDIR/stage0"
+GHC_STAGE0_PREFIX="$GHCHOME/android-host"
+GHC_STAGE0="$GHC_STAGE0_PREFIX/bin/ghc"
+
 GHC_PREFIX="$NDK"
 GHC_SRC="$NDK_ADDON_SRC/ghc"
 
@@ -164,6 +168,29 @@ if ! [ -e "$NDK_ADDON_PREFIX/lib/libgmp.a" ] ; then
     popd > /dev/null
 fi
 
+if ! [ -e "$GHC_STAGE0" ] ; then
+    # Checkout GHC
+    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_STAGE0_SRC"
+    apply_patches 'ghc-fix-sync-all.patch' "$GHC_STAGE0_SRC"
+    pushd "$GHC_STAGE0_SRC" > /dev/null
+    ./sync-all --no-dph get $MIRROR_OPT
+
+    # Setup build.mk
+    cat > mk/build.mk <<EOF
+HADDOCK_DOCS       = NO
+BUILD_DOCBOOK_HTML = NO
+BUILD_DOCBOOK_PS   = NO
+BUILD_DOCBOOK_PDF  = NO
+EOF
+
+    # Configure
+    perl boot
+    ./configure --prefix="$GHC_STAGE0_PREFIX"
+    make $MAKEFLAGS
+    make $MAKEFLAGS install
+    popd > /dev/null
+fi
+
 if ! [ -d "$GHC_SRC" ] ; then
     # Checkout GHC
     git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_SRC"
@@ -193,7 +220,7 @@ if ! [ -d "$GHC_SRC" ] ; then
 
     # Configure
     perl boot
-    ./configure --prefix="$GHC_PREFIX" --target=$NDK_TARGET
+    ./configure --enable-bootstrap-with-devel-snapshot --prefix="$GHC_PREFIX" --target=$NDK_TARGET --with-ghc=$GHC_STAGE0
     popd > /dev/null
 fi
 

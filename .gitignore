@@ -1,4 +1,5 @@
 /android-ndk-*
 /build-*
 /tarfiles
+/stage0
 /mirror.git

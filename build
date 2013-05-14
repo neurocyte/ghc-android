@@ -199,11 +199,20 @@ if ! [ -d "$GHC_SRC" ] ; then
     ./sync-all --no-dph get $MIRROR_OPT
 
     # Setup build.mk
-    echo "BuildFlavour = quick" > mk/build.mk
-    cat mk/build.mk.sample >> mk/build.mk
-    echo "Stage1Only = YES" >> mk/build.mk
-    echo "DYNAMIC_GHC_PROGRAMS = NO" >> mk/build.mk
-    echo "GhcLibWays = v" >> mk/build.mk
+    cat > mk/build.mk <<EOF
+Stage1Only = YES
+DYNAMIC_GHC_PROGRAMS = NO
+SRC_HC_OPTS     = -O -H64m
+GhcStage1HcOpts = -O2 -fasm
+GhcStage2HcOpts = -O2 -fasm -fllvm
+GhcHcOpts       = -Rghc-timing
+GhcLibHcOpts    = -O2
+GhcLibWays      = v
+HADDOCK_DOCS       = NO
+BUILD_DOCBOOK_HTML = NO
+BUILD_DOCBOOK_PS   = NO
+BUILD_DOCBOOK_PDF  = NO
+EOF
 
     # Update config.sub and config.guess
     for x in $(find . -name "config.sub") ; do

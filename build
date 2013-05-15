@@ -24,9 +24,11 @@ NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 if [ "x$1" == "x--x86" ] ; then
     NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-x86-4.7}
     NDK_TARGET=${NDK_TARGET:-i686-linux-android}
+    ARCH_OPTS=""
 else
     NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-arm-linux-androideabi-4.7}
     NDK_TARGET=${NDK_TARGET:-arm-linux-androideabi}
+    ARCH_OPTS="-fllvm"
 fi
 
 NDK_DESC=$NDK_PLATFORM-$NDK_TOOLCHAIN
@@ -204,7 +206,7 @@ Stage1Only = YES
 DYNAMIC_GHC_PROGRAMS = NO
 SRC_HC_OPTS     = -O -H64m
 GhcStage1HcOpts = -O2 -fasm
-GhcStage2HcOpts = -O2 -fasm -fllvm
+GhcStage2HcOpts = -O2 -fasm $ARCH_OPTS
 GhcHcOpts       = -Rghc-timing
 GhcLibHcOpts    = -O2
 GhcLibWays      = v

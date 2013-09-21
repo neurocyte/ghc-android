@@ -75,13 +75,12 @@ successfully cross-builds for Android, so it should keep working for
 the forseeable future.
 
 debootstrap --arch=i386 stable debian-stable-android
-chrooot debian-stable-android
+chroot debian-stable-android
 
 mount -t proc proc /proc
-apt-get -y install build-essential ghc git happy alex libncurses5-dev
-apt-get -y install ca-certificates curl file
+apt-get -y install build-essential ghc git alex libncurses5-dev cabal-install
 apt-get -y install llvm-3.0 # not 3.1; buggy on arm. 3.2 is ok too
-apt-get -y install m4 autoconf
+apt-get -y install ca-certificates curl file m4 autoconf
 wget http://snapshot.debian.org/archive/debian/20130903T155330Z/pool/main/a/automake-1.14/automake_1.14-1_all.deb
 dpkg -i automake*.deb
 rm *.deb
@@ -90,6 +89,10 @@ su androidbuilder
 
 cd
 rm -rf .ghc .cabal
+cabal update
+cabal install happy --bindir=$HOME/bin
+PATH=$HOME/bin:$PATH
+export PATH
 git clone https://github.com/joeyh/ghc-android
 cd ghc-android
 git checkout stable-ghc-snapshot

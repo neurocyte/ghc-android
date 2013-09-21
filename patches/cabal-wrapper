@@ -2,7 +2,7 @@ BIN_GHC=$(ls $NDK/bin/*-ghc)
 BIN_HSC2HS=$(ls $NDK/bin/*-hsc2hs)
 BIN_LD=$(ls $NDK/bin/*-ld)
 CC=$(ls $NDK/bin/*-gcc)
-PKGDB=$(echo $NDK/lib/ghc-*)/package.conf.d
+PKGDB=$(echo $NDK/lib/*-ghc-*)/package.conf.d
 export HOME=$NDK
 
 mkdir -p $NDK/cabal

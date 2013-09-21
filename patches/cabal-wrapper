@@ -9,7 +9,7 @@ mkdir -p $NDK/cabal
 [ -e "$NDK/.cabal" ] || ln -s $NDK/cabal $NDK/.cabal
 
 if [ "$1" = install ] || [ "$1" = configure ] ; then
-    exec /usr/bin/cabal \
+    exec $NEW_CABAL \
         --with-compiler=$BIN_GHC \
         --with-gcc=$CC \
         --with-ghc=$BIN_GHC \

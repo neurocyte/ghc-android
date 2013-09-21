@@ -80,7 +80,7 @@ chroot debian-stable-android
 mount -t proc proc /proc
 apt-get -y install build-essential ghc git libncurses5-dev cabal-install
 apt-get -y install llvm-3.0 # not 3.1; buggy on arm. 3.2 is ok too
-apt-get -y install ca-certificates curl file m4 autoconf
+apt-get -y install ca-certificates curl file m4 autoconf zlib1g-dev
 wget http://snapshot.debian.org/archive/debian/20130903T155330Z/pool/main/a/automake-1.14/automake_1.14-1_all.deb
 dpkg -i automake*.deb
 rm *.deb

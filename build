@@ -11,8 +11,8 @@ BASEDIR="$(dirname $0)"
 cd "$BASEDIR"
 BASEDIR="$(pwd)"
 if [ -z "$MIRROR_OPT" ] ; then
-    if [ -d "$GHCHOME/mirror.git" ] ; then
-        MIRROR_OPT="--reference $GHCHOME/mirror.git"
+    if [ -d "`pwd`/mirror.git" ] ; then
+        MIRROR_OPT="--reference `pwd`/mirror.git"
     fi
 fi
 

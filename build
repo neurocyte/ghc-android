@@ -231,7 +231,7 @@ EOF
 
     # Configure
     perl boot
-    ./configure --enable-bootstrap-with-devel-snapshot --prefix="$GHC_PREFIX" --target=$NDK_TARGET --with-ghc=$GHC_STAGE0
+    ./configure --enable-bootstrap-with-devel-snapshot --prefix="$GHC_PREFIX" --target=$NDK_TARGET --with-ghc=$GHC_STAGE0 --with-gcc=$NDK/bin/$NDK_TARGET-gcc
     popd > /dev/null
 fi
 

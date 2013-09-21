@@ -17,6 +17,8 @@ if [ "$1" = install ] || [ "$1" = configure ] ; then
         --with-ld=$BIN_LD \
         --with-hsc2hs=$BIN_HSC2HS \
         --package-db=$PKGDB \
+	--hsc2hs-options=--cross-compile" \
+	--configure-option=--host=$NDK_TARGET
         "$@"
 else
     exec /usr/bin/cabal "$@"

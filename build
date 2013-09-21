@@ -269,6 +269,7 @@ chmod +x $HSC2HS_TARGET
 # Write cabal wrapper
 echo \#/bin/bash > "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 echo NDK=$GHC_PREFIX >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+echo NDK_TARGET=$NDK_TARGET >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 chmod +x "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
 

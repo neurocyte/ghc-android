@@ -49,7 +49,7 @@ NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
 GMP_RELEASE=5.1.0
 GMP_MD5=69fd511e435f81a0334f14f00c7d77b3
 
-CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.13}
+CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.14}
 
 BUILD_GCC=gcc
 BUILD_ARCH=$($BUILD_GCC -v 2>&1 | grep ^Target: | cut -f 2 -d ' ')

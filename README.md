@@ -78,6 +78,8 @@ debootstrap --arch=i386 stable debian-stable-android
 chroot debian-stable-android
 
 mount -t proc proc /proc
+echo "deb-src http://ftp.us.debian.org/debian stable main" >> /etc/apt/sources.list
+apt-get update
 apt-get -y install build-essential ghc git libncurses5-dev cabal-install
 apt-get -y install llvm-3.0 # not 3.1; buggy on arm. 3.2 is ok too
 apt-get -y install ca-certificates curl file m4 autoconf zlib1g-dev

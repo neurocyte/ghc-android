@@ -8,7 +8,7 @@ export HOME=$NDK
 mkdir -p $NDK/cabal
 [ -e "$NDK/.cabal" ] || ln -s $NDK/cabal $NDK/.cabal
 
-if [ "$1" = install ] || [ "$1" = configure ] ; then
+if [ "$1" = install ] || [ "$1" = configure ] || [ "$1" = build ] ; then
     exec $NEW_CABAL \
         --with-compiler=$BIN_GHC \
         --with-gcc=$CC \

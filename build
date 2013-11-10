@@ -17,16 +17,16 @@ if [ -z "$MIRROR_OPT" ] ; then
 fi
 
 # Basic parameters
-NDK_RELEASE=${NDK_RELEASE:-r8e}
-NDK_MD5=26d774b0884bcd98de08eb4de41ab532
+NDK_RELEASE=${NDK_RELEASE:-r9b}
+NDK_MD5=d7f783deaeea6b60cb515d9427c01c2e
 NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 
 if [ "x$1" == "x--x86" ] ; then
-    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-x86-4.7}
+    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-x86-4.8}
     NDK_TARGET=${NDK_TARGET:-i686-linux-android}
     ARCH_OPTS=""
 else
-    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-arm-linux-androideabi-4.7}
+    NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-arm-linux-androideabi-4.8}
     NDK_TARGET=${NDK_TARGET:-arm-linux-androideabi}
     ARCH_OPTS="-fllvm"
 fi
@@ -46,8 +46,8 @@ GHC_SRC="$NDK_ADDON_SRC/ghc"
 NCURSES_RELEASE=5.9
 NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
 
-GMP_RELEASE=5.1.0
-GMP_MD5=69fd511e435f81a0334f14f00c7d77b3
+GMP_RELEASE=5.1.3
+GMP_MD5=e5fe367801ff067b923d1e6a126448aa
 
 CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.14}
 

@@ -18,7 +18,7 @@ fi
 
 # Basic parameters
 NDK_RELEASE=${NDK_RELEASE:-r9b}
-NDK_MD5=d7f783deaeea6b60cb515d9427c01c2e
+NDK_MD5=56c0999a2683d6711591843217f943e0
 NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 
 if [ "x$1" == "x--x86" ] ; then
@@ -76,7 +76,7 @@ function apply_patches() {
 }
 
 # Download and configure the Android NDK toolchain
-NDK_TAR_FILE=android-ndk-${NDK_RELEASE}-linux-x86.tar.bz2
+NDK_TAR_FILE=android-ndk-${NDK_RELEASE}-linux-x86_64.tar.bz2
 NDK_TAR_PATH="${TARDIR}/${NDK_TAR_FILE}"
 NDK_PATH="$BASEDIR/android-ndk-$NDK_RELEASE"
 if ! [ -d "$NDK" ] ; then

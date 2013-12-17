@@ -1,8 +1,31 @@
 diff --git a/sync-all b/sync-all
-index 71d707e..ed5966d 100755
+index 38a840d..79c3e8a 100755
 --- a/sync-all
 +++ b/sync-all
-@@ -790,23 +790,10 @@ sub main {
+@@ -563,22 +563,6 @@ sub gitall {
+     unlink "resume";
+ }
+ 
+-sub gitInitSubmodules {
+-    &git(".", "submodule", "init", @_);
+-
+-    my ($repo_base, $checked_out_tree, $repo_local) = getrepo();
+-    # if we came from a local repository, grab our submodules from their
+-    # checkouts over there, if they exist.
+-    if ($repo_local) {
+-        my $gitConfig = &tryReadFile(".git/config");
+-        foreach $_ (split /^/, $gitConfig) {
+-            if ($_ =~ /^\[submodule "(.*)"\]$/ and -e "$repo_base/$1/.git") {
+-                &git(".", "config", "submodule.$1.url", "$repo_base/$1");
+-            }
+-        }
+-    }
+-}
+-
+ sub checkCurrentBranchIsMaster {
+     my $branch = `git symbolic-ref HEAD`;
+     $branch =~ s/refs\/heads\///;
+@@ -907,24 +891,10 @@ sub main {
  
          &gitall($command, @_);
  
@@ -10,18 +33,19 @@ index 71d707e..ed5966d 100755
 +        my @submodule_args = @_;
  
 -        if ($command eq "get") {
--            &git(".", "submodule", "init", @submodule_args);
+-            &gitInitSubmodules(@submodule_args);
 -        }
+-
 -        if ($command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &git(".", "submodule", "init", @submodule_args);
+-                &gitInitSubmodules(@submodule_args);
 -            }
 -        }
          if ($command eq "get" or $command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &git(".", "submodule", "init", @submodule_args);
+-                &gitInitSubmodules(@submodule_args);
 -            }
 -            &git(".", "submodule", "update", @submodule_args);
 +            &git(".", "submodule", "update", "--init", @submodule_args);

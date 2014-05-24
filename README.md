@@ -70,9 +70,6 @@ Comments, patches and success reports are welcome.
 ## tested working build with Debian stable
 
 Running these commands will make a Debian stable chroot and build in there.
-This has been tested to work, and uses a snapshot from ghc git that
-successfully cross-builds for Android, so it should keep working for
-the forseeable future.
 
 	debootstrap --arch=i386 stable debian-stable-android
 	chroot debian-stable-android

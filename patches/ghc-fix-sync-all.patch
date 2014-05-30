@@ -1,8 +1,8 @@
 diff --git a/sync-all b/sync-all
-index 71d707e..ed5966d 100755
+index ffc150e..baf403d 100755
 --- a/sync-all
 +++ b/sync-all
-@@ -790,23 +790,10 @@ sub main {
+@@ -929,24 +929,10 @@ sub main {
  
          &gitall($command, @_);
  
@@ -10,18 +10,19 @@ index 71d707e..ed5966d 100755
 +        my @submodule_args = @_;
  
 -        if ($command eq "get") {
--            &git(".", "submodule", "init", @submodule_args);
+-            &gitInitSubmodules(@submodule_args);
 -        }
+-
 -        if ($command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &git(".", "submodule", "init", @submodule_args);
+-                &gitInitSubmodules(@submodule_args);
 -            }
 -        }
          if ($command eq "get" or $command eq "pull") {
 -            my $gitConfig = &tryReadFile(".git/config");
 -            if ($gitConfig !~ /submodule/) {
--                &git(".", "submodule", "init", @submodule_args);
+-                &gitInitSubmodules(@submodule_args);
 -            }
 -            &git(".", "submodule", "update", @submodule_args);
 +            &git(".", "submodule", "update", "--init", @submodule_args);

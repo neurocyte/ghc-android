@@ -1,23 +1,12 @@
-From 0949e4fcc0ef4a89360092b0293256411d7ba9d1 Mon Sep 17 00:00:00 2001
-From: CJ van den Berg <cj@vdbonline.com>
-Date: Wed, 15 May 2013 10:12:46 +0200
-Subject: [PATCH] Wrap all termios.h functions because they are declared inline
- on Android
-
----
- System/Posix/Terminal/Common.hsc | 20 ++++++++++----------
- cbits/HsUnix.c                   | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 45 insertions(+), 10 deletions(-)
-
 diff --git a/System/Posix/Terminal/Common.hsc b/System/Posix/Terminal/Common.hsc
-index 5d718a8..2e793a0 100644
+index e43a59a..ecde5f8 100644
 --- a/System/Posix/Terminal/Common.hsc
 +++ b/System/Posix/Terminal/Common.hsc
-@@ -342,14 +342,14 @@ inputSpeed termios = unsafePerformIO $ do
+@@ -332,14 +332,14 @@ inputSpeed termios = unsafePerformIO $ do
      w <- c_cfgetispeed p
      return (word2Baud w)
  
--foreign import ccall unsafe "cfgetispeed"
+-foreign import capi unsafe "termios.h cfgetispeed"
 +foreign import ccall unsafe "__hsunix_cfgetispeed"
    c_cfgetispeed :: Ptr CTermios -> IO CSpeed
  
@@ -25,79 +14,71 @@ index 5d718a8..2e793a0 100644
  withInputSpeed termios br = unsafePerformIO $ do
    withNewTermios termios $ \p -> c_cfsetispeed p (baud2Word br)
  
--foreign import ccall unsafe "cfsetispeed"
-+foreign import ccall unsafe "__hsunix_cfsetispeed"
+-foreign import capi unsafe "termios.h cfsetispeed"
++foreign import ccall unsafe "__hs_unix_cfsetispeed"
    c_cfsetispeed :: Ptr CTermios -> CSpeed -> IO CInt
  
  
-@@ -359,14 +359,14 @@ outputSpeed termios = unsafePerformIO $ do
-     w <- c_cfgetospeed p
-     return (word2Baud w)
- 
--foreign import ccall unsafe "cfgetospeed"
-+foreign import ccall unsafe "__hsunix_cfgetospeed"
-   c_cfgetospeed :: Ptr CTermios -> IO CSpeed
- 
- withOutputSpeed :: TerminalAttributes -> BaudRate -> TerminalAttributes
+@@ -356,7 +356,7 @@ withOutputSpeed :: TerminalAttributes -> BaudRate -> TerminalAttributes
  withOutputSpeed termios br = unsafePerformIO $ do
    withNewTermios termios $ \p -> c_cfsetospeed p (baud2Word br)
  
--foreign import ccall unsafe "cfsetospeed"
-+foreign import ccall unsafe "__hsunix_cfsetospeed"
+-foreign import capi unsafe "termios.h cfsetospeed"
++foreign import ccall unsafe "__hs_unix_cfsetospeed"
    c_cfsetospeed :: Ptr CTermios -> CSpeed -> IO CInt
  
  -- | @getTerminalAttributes fd@ calls @tcgetattr@ to obtain
-@@ -378,7 +378,7 @@ getTerminalAttributes (Fd fd) = do
+@@ -368,7 +368,7 @@ getTerminalAttributes (Fd fd) = do
        throwErrnoIfMinus1_ "getTerminalAttributes" (c_tcgetattr fd p)
    return $ makeTerminalAttributes fp
  
--foreign import ccall unsafe "tcgetattr"
-+foreign import ccall unsafe "__hsunix_tcgetattr"
+-foreign import capi unsafe "termios.h tcgetattr"
++foreign import ccall unsafe "__hs_unix_tcgetattr"
    c_tcgetattr :: CInt -> Ptr CTermios -> IO CInt
  
  data TerminalState
-@@ -403,7 +403,7 @@ setTerminalAttributes (Fd fd) termios state = do
+@@ -393,7 +393,7 @@ setTerminalAttributes (Fd fd) termios state = do
      state2Int WhenDrained = (#const TCSADRAIN)
      state2Int WhenFlushed = (#const TCSAFLUSH)
  
--foreign import ccall unsafe "tcsetattr"
-+foreign import ccall unsafe "__hsunix_tcsetattr"
+-foreign import capi unsafe "termios.h tcsetattr"
++foreign import ccall unsafe "__hs_unix_tcsetattr"
     c_tcsetattr :: CInt -> CInt -> Ptr CTermios -> IO CInt
  
  -- | @sendBreak fd duration@ calls @tcsendbreak@ to transmit a
-@@ -413,7 +413,7 @@ sendBreak :: Fd -> Int -> IO ()
+@@ -403,7 +403,7 @@ sendBreak :: Fd -> Int -> IO ()
  sendBreak (Fd fd) duration
    = throwErrnoIfMinus1_ "sendBreak" (c_tcsendbreak fd (fromIntegral duration))
  
--foreign import ccall unsafe "tcsendbreak"
-+foreign import ccall unsafe "__hsunix_tcsendbreak"
+-foreign import capi unsafe "termios.h tcsendbreak"
++foreign import ccall unsafe "__hs_unix_tcsendbreak"
    c_tcsendbreak :: CInt -> CInt -> IO CInt
  
  -- | @drainOutput fd@ calls @tcdrain@ to block until all output
-@@ -421,7 +421,7 @@ foreign import ccall unsafe "tcsendbreak"
+@@ -411,7 +411,7 @@ foreign import capi unsafe "termios.h tcsendbreak"
  drainOutput :: Fd -> IO ()
  drainOutput (Fd fd) = throwErrnoIfMinus1_ "drainOutput" (c_tcdrain fd)
  
--foreign import ccall unsafe "tcdrain"
-+foreign import ccall unsafe "__hsunix_tcdrain"
+-foreign import capi unsafe "termios.h tcdrain"
++foreign import ccall unsafe "__hs_unix_tcdrain"
    c_tcdrain :: CInt -> IO CInt
  
  
-@@ -442,7 +442,7 @@ discardData (Fd fd) queue =
+@@ -432,7 +432,7 @@ discardData (Fd fd) queue =
      queue2Int OutputQueue = (#const TCOFLUSH)
      queue2Int BothQueues  = (#const TCIOFLUSH)
  
--foreign import ccall unsafe "tcflush"
-+foreign import ccall unsafe "__hsunix_tcflush"
+-foreign import capi unsafe "termios.h tcflush"
++foreign import ccall unsafe "__hs_unix_tcflush"
    c_tcflush :: CInt -> CInt -> IO CInt
  
  data FlowAction
-@@ -464,7 +464,7 @@ controlFlow (Fd fd) action =
+@@ -454,7 +454,7 @@ controlFlow (Fd fd) action =
      action2Int TransmitStop  = (#const TCIOFF)
      action2Int TransmitStart = (#const TCION)
  
--foreign import ccall unsafe "tcflow"
-+foreign import ccall unsafe "__hsunix_tcflow"
+-foreign import capi unsafe "termios.h tcflow"
++foreign import ccall unsafe "__hs_unix_tcflow"
    c_tcflow :: CInt -> CInt -> IO CInt
  
  -- | @getTerminalProcessGroupID fd@ calls @tcgetpgrp@ to
@@ -144,6 +125,3 @@ index db97de2..fc69da2 100644
 +#else
 +int __hsunix_tcdrain(int fd) { return tcdrain(fd); }
 +#endif
--- 
-1.8.2.3
-

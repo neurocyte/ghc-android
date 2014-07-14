@@ -10,3 +10,4 @@
 #define OFFSET_MP_INT__mp_d 8
 #define REP_MP_INT__mp_d b32
 #define MP_INT__mp_d(__ptr__)  REP_MP_INT__mp_d[__ptr__+OFFSET_MP_INT__mp_d]
+#define SIZEOF_MP_LIMB_T 4

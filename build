@@ -6,31 +6,26 @@ set -e
 MAKEFLAGS=${MAKEFLAGS:--j6}
 
 # Basic configuration
-GHCHOME=$HOME/.ghc
+GHCHOME=${GHCHOME:-/opt/ghc-android}
 BASEDIR="$(dirname $0)"
 cd "$BASEDIR"
 BASEDIR="$(pwd)"
-if [ -z "$MIRROR_OPT" ] ; then
-    if [ -d $(pwd)/mirror.git ] ; then
-        MIRROR_OPT=$(echo --reference $(pwd)/mirror.git)
-    elif [ -d ~/.ghc/mirror.git ] ; then
-        MIRROR_OPT=$(echo --reference ~/.ghc/mirror.git)
-    fi
-fi
 
 # Basic parameters
-NDK_RELEASE=${NDK_RELEASE:-r9b}
-NDK_MD5=56c0999a2683d6711591843217f943e0
+NDK_RELEASE=${NDK_RELEASE:-r9d}
+NDK_MD5=c7c775ab3342965408d20fd18e71aa45
 NDK_PLATFORM=${NDK_PLATFORM:-android-14}
 
 if [ "x$1" == "x--x86" ] ; then
     NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-x86-4.8}
     NDK_TARGET=${NDK_TARGET:-i686-linux-android}
     ARCH_OPTS=""
+    GHC_TARGET=${GHC_TARGET:-x86-4.8}
 else
     NDK_TOOLCHAIN=${NDK_TOOLCHAIN:-arm-linux-androideabi-4.8}
     NDK_TARGET=${NDK_TARGET:-arm-linux-androideabi}
     ARCH_OPTS="-fllvm"
+    GHC_TARGET=${GHC_TARGET:-arm-unknown-linux-androideabi}
 fi
 
 NDK_DESC=$NDK_PLATFORM-$NDK_TOOLCHAIN
@@ -38,18 +33,22 @@ NDK="$GHCHOME/$NDK_PLATFORM/$NDK_TOOLCHAIN"
 NDK_ADDON_SRC="$BASEDIR/build-$NDK_DESC"
 NDK_ADDON_PREFIX="$NDK/sysroot/usr"
 
-GHC_STAGE0_SRC="$BASEDIR/stage0"
-GHC_STAGE0_PREFIX="$GHCHOME/android-host"
+GHC_RELEASE=${GHC_RELEASE:-7.8.3}
+GHC_STAGE0_MD5=4dd880afc51c6ba6126e26d17b6340d9
+GHC_SRC_MD5=5e34b2a29564596c9ed83fb8667b47d4
+
+GHC_STAGE0_SRC="$BASEDIR/ghc-$GHC_RELEASE"
+GHC_STAGE0_PREFIX="$GHCHOME"
 GHC_STAGE0="$GHC_STAGE0_PREFIX/bin/ghc"
 
 GHC_PREFIX="$NDK"
-GHC_SRC="$NDK_ADDON_SRC/ghc"
+GHC_SRC="$NDK_ADDON_SRC/ghc-$GHC_RELEASE"
 
 NCURSES_RELEASE=5.9
 NCURSES_MD5=8cb9c412e5f2d96bc6f459aa8c6282a1
 
-GMP_RELEASE=5.1.3
-GMP_MD5=e5fe367801ff067b923d1e6a126448aa
+GMP_RELEASE=6.0.0a
+GMP_MD5=1e6da4e434553d2811437aa42c7f7c76
 
 CONFIG_SUB_SRC=${CONFIG_SUB_SRC:-/usr/share/automake-1.14}
 
@@ -136,8 +135,10 @@ if ! [ -e "$NDK_ADDON_PREFIX/lib/libiconv.a" ] ; then
     fi
 
     pushd $ICONV_SRC > /dev/null
-    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
-    make $MAKEFLAGS
+    if ! [ -e "lib/.libs/libiconv.a" ] ; then
+        ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
+        make $MAKEFLAGS
+    fi
     make install
     popd > /dev/null
 fi
@@ -145,9 +146,11 @@ fi
 # Build and install ncurses
 if ! [ -e "$NDK_ADDON_PREFIX/lib/libncurses.a" ] ; then
     pushd $NCURSES_SRC > /dev/null
-    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared --includedir="$NDK_ADDON_PREFIX/include" --without-manpages
-    echo '#undef HAVE_LOCALE_H' >> "$NCURSES_SRC/include/ncurses_cfg.h"   # TMP hack
-    make $MAKEFLAGS
+    if ! [ -e "lib/libncurses.a" ] ; then
+        ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared --includedir="$NDK_ADDON_PREFIX/include" --without-manpages
+        echo '#undef HAVE_LOCALE_H' >> "$NCURSES_SRC/include/ncurses_cfg.h"   # TMP hack
+        make $MAKEFLAGS
+    fi
     make install
     popd > /dev/null
 fi
@@ -155,52 +158,55 @@ fi
 # Build and install gmp
 GMP_TAR_FILE=gmp-${GMP_RELEASE}.tar.xz
 GMP_TAR_PATH="${TARDIR}/${GMP_TAR_FILE}"
-GMP_SRC="$NDK_ADDON_SRC/gmp-${GMP_RELEASE}"
+GMP_SRC="$NDK_ADDON_SRC/gmp-6.0.0"
 if ! [ -d "$GMP_SRC" ] ; then
     if ! check_md5 "$GMP_TAR_PATH" "$GMP_MD5" ; then
         echo Downloading gmp $GMP_RELEASE
-        curl -o "${TARDIR}/${GMP_TAR_FILE}"  ftp://ftp.gmplib.org/pub/gmp-${GMP_RELEASE}/${GMP_TAR_FILE}
+        curl -o "${TARDIR}/${GMP_TAR_FILE}"  https://gmplib.org/download/gmp/${GMP_TAR_FILE}
         check_md5 "$GMP_TAR_PATH" "$GMP_MD5"
     fi
     (cd $NDK_ADDON_SRC; tar xf "$TARDIR/$GMP_TAR_FILE")
 fi
 if ! [ -e "$NDK_ADDON_PREFIX/lib/libgmp.a" ] ; then
     pushd $GMP_SRC > /dev/null
-    ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
-    make $MAKEFLAGS
+    if ! [ -e ".libs/libgmp.a" ] ; then
+        ./configure --prefix="$NDK_ADDON_PREFIX" --host=$NDK_TARGET --build=$BUILD_ARCH --with-build-cc=$BUILD_GCC --enable-static --disable-shared
+        make $MAKEFLAGS
+    fi
     make install
     popd > /dev/null
 fi
 
+GHC_STAGE0_TAR_FILE=ghc-${GHC_RELEASE}-x86_64-unknown-linux-deb7.tar.xz
+GHC_STAGE0_TAR_PATH="${TARDIR}/${GHC_STAGE0_TAR_FILE}"
 if ! [ -e "$GHC_STAGE0" ] ; then
-    # Checkout GHC
-    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_STAGE0_SRC"
-    apply_patches 'ghc-fix-sync-all.patch' "$GHC_STAGE0_SRC"
+    if ! check_md5 "$GHC_STAGE0_TAR_PATH" "$GHC_STAGE0_MD5" ; then
+        echo Downloading the GHC $GHC_RELEASE binary release
+        curl -o "${TARDIR}/${GHC_STAGE0_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_STAGE0_TAR_FILE
+        check_md5 "$GHC_STAGE0_TAR_PATH" "$GHC_STAGE0_MD5"
+    fi
+    echo Unpacking the GHC $GHC_RELEASE binary release
+    tar xf "$GHC_STAGE0_TAR_PATH"
     pushd "$GHC_STAGE0_SRC" > /dev/null
-    ./sync-all --no-dph get $MIRROR_OPT
-
-    # Setup build.mk
-    cat > mk/build.mk <<EOF
-HADDOCK_DOCS       = NO
-BUILD_DOCBOOK_HTML = NO
-BUILD_DOCBOOK_PS   = NO
-BUILD_DOCBOOK_PDF  = NO
-EOF
-
-    # Configure
-    perl boot
     ./configure --prefix="$GHC_STAGE0_PREFIX"
-    make $MAKEFLAGS
     make $MAKEFLAGS install
     popd > /dev/null
 fi
 
+GHC_SRC_TAR_FILE=ghc-${GHC_RELEASE}-src.tar.xz
+GHC_SRC_TAR_PATH="${TARDIR}/${GHC_SRC_TAR_FILE}"
 if ! [ -d "$GHC_SRC" ] ; then
-    # Checkout GHC
-    git clone $MIRROR_OPT http://darcs.haskell.org/ghc.git/ "$GHC_SRC"
+    if ! check_md5 "$GHC_SRC_TAR_PATH" "$GHC_SRC_MD5" ; then
+        echo Downloading the GHC $GHC_RELEASE source release
+        curl -o "${TARDIR}/${GHC_SRC_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_SRC_TAR_FILE
+        check_md5 "$GHC_SRC_TAR_PATH" "$GHC_SRC_MD5"
+    fi
+    pushd "$NDK_ADDON_SRC" > /dev/null
+    echo Unpacking the GHC $GHC_RELEASE source release
+    tar xf "$GHC_SRC_TAR_PATH"
+    popd > /dev/null
     apply_patches 'ghc-*' "$GHC_SRC"
     pushd "$GHC_SRC" > /dev/null
-    ./sync-all --no-dph get $MIRROR_OPT
 
     # Setup build.mk
     cat > mk/build.mk <<EOF
@@ -232,59 +238,72 @@ EOF
     apply_patches "base-*" "$GHC_SRC/libraries/base"
 
     # Configure
-    perl boot
-    ./configure --enable-bootstrap-with-devel-snapshot --prefix="$GHC_PREFIX" --target=$NDK_TARGET --with-ghc=$GHC_STAGE0 --with-gcc=$NDK/bin/$NDK_TARGET-gcc
+    ./configure --prefix="$GHC_PREFIX" --target=$NDK_TARGET --with-ghc=$GHC_STAGE0 --with-gcc=$NDK/bin/$NDK_TARGET-gcc
     popd > /dev/null
 fi
 
-pushd "$GHC_SRC" > /dev/null
+GHC_STAGE1=$NDK/bin/$GHC_TARGET-ghc
+if ! [ -e "$GHC_STAGE1" ] ; then
+    pushd "$GHC_SRC" > /dev/null
 
-function check_install_gmp_constants() {
-    GMPDCHDR="libraries/integer-gmp/mkGmpDerivedConstants/dist/GmpDerivedConstants.h"
-    if ! [ -e  "$GMPDCHDR" ] ; then
-        if [ -e "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" ] ; then
-            cp -v "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" "$GMPDCHDR"
-        else
-            echo \#\#\# Execute the following commands to generate a GmpDerivedConstants.h for your target, then run build again:
-            echo \#\#\# adb push ghc-$NDK_DESC/libraries/integer-gmp/cbits/mkGmpDerivedConstants /data/local
-            echo \#\#\# adb shell /data/local/mkGmpDerivedConstants \> $BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h
-            echo \#\#\# adb shell rm /data/local/mkGmpDerivedConstants
-            exit 1
+    function check_install_gmp_constants() {
+        GMPDCHDR="libraries/integer-gmp/mkGmpDerivedConstants/dist/GmpDerivedConstants.h"
+        if ! [ -e  "$GMPDCHDR" ] ; then
+            if [ -e "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" ] ; then
+                cp -v "$BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h" "$GMPDCHDR"
+            else
+                echo \#\#\# Execute the following commands to generate a GmpDerivedConstants.h for your target, then run build again:
+                echo \#\#\# adb push ghc-$NDK_DESC/libraries/integer-gmp/cbits/mkGmpDerivedConstants /data/local
+                echo \#\#\# adb shell /data/local/mkGmpDerivedConstants \> $BASEDIR/patches/gmp-$NDK_DESC-GmpDerivedConstants.h
+                echo \#\#\# adb shell rm /data/local/mkGmpDerivedConstants
+                exit 1
+            fi
         fi
-    fi
-}
+    }
 
-make $MAKEFLAGS || true # TMP hack, see http://hackage.haskell.org/trac/ghc/ticket/7490
-make $MAKEFLAGS || true # TMP hack, target mkGmpDerivedConstants fails on build host
-check_install_gmp_constants
-make $MAKEFLAGS || true # TMP hack, tries to execut inplace stage2
-make $MAKEFLAGS || true # TMP hack, one more for luck
-make install
-popd > /dev/null
+    make $MAKEFLAGS || true # TMP hack, see http://hackage.haskell.org/trac/ghc/ticket/7490
+    make $MAKEFLAGS || true # TMP hack, target mkGmpDerivedConstants fails on build host
+    check_install_gmp_constants
+    make $MAKEFLAGS || true # TMP hack, tries to execut inplace stage2
+    make $MAKEFLAGS || true # TMP hack, one more for luck
+    make install
+    popd > /dev/null
+fi
 
 # Write hsc2hs wrapper
-HSC2HS_TARGET=$(ls $GHC_PREFIX/bin/*-hsc2hs)
+HSC2HS_TARGET=$(ls $GHC_PREFIX/bin/$GHC_TARGET-hsc2hs)
 echo \#/bin/bash > $HSC2HS_TARGET
 echo 'exec /usr/bin/hsc2hs --cross-compile "$@" --define=linux_android_HOST_OS=1' >> $HSC2HS_TARGET
 chmod +x $HSC2HS_TARGET
 
-# install a cabal that supports cross compilation
-cabal update
-cabal install Cabal cabal-install --bindir=$GHC_STAGE0_PREFIX/bin/
+GHC_STAGE0_CABAL="$GHC_STAGE0_PREFIX/bin/cabal"
+if ! [ -e "$GHC_STAGE0_CABAL" ] ; then
+    # install a cabal that supports cross compilation
+    #cabal update
+    cabal install Cabal cabal-install \
+        --bindir=$GHC_STAGE0_PREFIX/bin/ \
+        --with-compiler=$GHC_STAGE0_PREFIX/bin/ghc \
+        --with-ghc=$GHC_STAGE0_PREFIX/bin/ghc \
+        --with-ghc-pkg=$GHC_STAGE0_PREFIX/bin/ghc-pkg \
+        --with-hsc2hs=$GHC_STAGE0_PREFIX/bin/hsc2hs \
+        --package-db=$GHC_STAGE0_PREFIX/lib/ghc-$GHC_RELEASE/package.conf.d
 
-# Write cabal wrapper
-echo \#/bin/bash > "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-echo NDK=$GHC_PREFIX >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-echo NDK_TARGET=$NDK_TARGET >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-echo NEW_CABAL=$GHC_STAGE0_PREFIX/bin/cabal >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
-chmod +x "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    # Write cabal wrapper
+    echo \#/bin/bash > "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    echo NDK=$GHC_PREFIX >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    echo NDK_TARGET=$NDK_TARGET >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    echo NEW_CABAL=$GHC_STAGE0_PREFIX/bin/cabal >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    cat "$BASEDIR/patches/cabal-wrapper" >> "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+    chmod +x "$GHC_PREFIX/bin/$NDK_TARGET-cabal"
+fi
 
 # Add target bindir links
+function maybe_link() {
+    if [ -e "$1" -a ! -e "$2" ] ; then ln -s "$$1" "$2" ; fi
+}
 function bindir_link() {
-    [ -e $GHC_PREFIX/$NDK_TARGET/bin/$1 ] || \
-        (echo ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1 ;\
-        ln -s $GHC_PREFIX/bin/*-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1)
+    maybe_link $GHC_PREFIX/bin/$GHC_TARGET-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1
+    maybe_link $GHC_PREFIX/bin/$GHC_TARGET-$1 $GHC_PREFIX/bin/$NDK_TARGET-$1
 }
 bindir_link ghc
 bindir_link ghc-pkg

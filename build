@@ -6,7 +6,7 @@ set -e
 MAKEFLAGS=${MAKEFLAGS:--j6}
 
 # Basic configuration
-GHCHOME=${GHCHOME:-/opt/ghc-android}
+GHCHOME=${GHCHOME:-/opt/ghc}
 BASEDIR="$(dirname $0)"
 cd "$BASEDIR"
 BASEDIR="$(pwd)"

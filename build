@@ -123,7 +123,7 @@ fi
 ICONV_SRC="$NDK_ADDON_SRC/iconv"
 if ! [ -e "$NDK_ADDON_PREFIX/lib/libiconv.a" ] ; then
     if ! [ -d "$ICONV_SRC" ] ; then
-        git clone $MIRROR_OPT https://github.com/ironsteel/iconv-android.git $ICONV_SRC
+        git clone https://github.com/ironsteel/iconv-android.git $ICONV_SRC
 
         # Update config.sub and config.guess
         cp -v "$CONFIG_SUB_SRC/config.sub" "$ICONV_SRC/build-aux"
@@ -279,14 +279,36 @@ chmod +x $HSC2HS_TARGET
 GHC_STAGE0_CABAL="$GHC_STAGE0_PREFIX/bin/cabal"
 if ! [ -e "$GHC_STAGE0_CABAL" ] ; then
     # install a cabal that supports cross compilation
-    #cabal update
-    cabal install Cabal cabal-install \
+    CABAL_SRC="$NDK_ADDON_SRC/cabal"
+    if ! [ -d "$CABAL_SRC" ] ; then
+        git clone https://github.com/haskell/cabal.git $CABAL_SRC
+    fi
+
+    pushd $CABAL_SRC/Cabal > /dev/null
+    $GHC_STAGE0 -threaded --make Setup
+    ./Setup configure \
+        --prefix=$GHC_STAGE0_PREFIX \
         --bindir=$GHC_STAGE0_PREFIX/bin/ \
-        --with-compiler=$GHC_STAGE0_PREFIX/bin/ghc \
-        --with-ghc=$GHC_STAGE0_PREFIX/bin/ghc \
+        --with-compiler=$GHC_STAGE0 \
+        --with-ghc=$GHC_STAGE0 \
         --with-ghc-pkg=$GHC_STAGE0_PREFIX/bin/ghc-pkg \
         --with-hsc2hs=$GHC_STAGE0_PREFIX/bin/hsc2hs \
         --package-db=$GHC_STAGE0_PREFIX/lib/ghc-$GHC_RELEASE/package.conf.d
+    ./Setup build
+    ./Setup install
+    popd > /dev/null
+
+    pushd $CABAL_SRC/cabal-install > /dev/null
+    (
+        set -e
+        GHC=$GHC_STAGE0
+        GHC_PKG=$GHC_STAGE0_PREFIX/bin/ghc-pkg
+        HADDOCK=$GHC_STAGE0_PREFIX/bin/haddock
+        PREFIX=$GHC_STAGE0_PREFIX
+        . ./bootstrap.sh --global
+    )
+    popd > /dev/null
+    $GHC_STAGE0_CABAL update
 fi
 
 CABAL_WRAPPER="$GHC_PREFIX/bin/$GHC_TARGET-cabal"

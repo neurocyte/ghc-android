@@ -1,19 +1,20 @@
-BIN_GHC=$(ls $NDK/bin/*-ghc)
-BIN_HSC2HS=$(ls $NDK/bin/*-hsc2hs)
-BIN_LD=$(ls $NDK/bin/*-ld)
-CC=$(ls $NDK/bin/*-gcc)
-PKGDB=$(echo $NDK/lib/*-ghc-*)/package.conf.d
+BIN_GHC=$NDK/bin/$GHC_TARGET-ghc
+BIN_GHC_PKG=$NDK/bin/$GHC_TARGET-ghc-pkg
+BIN_HSC2HS=$NDK/bin/$GHC_TARGET-hsc2hs
+BIN_LD=$NDK/bin/$NDK_TARGET-ld
+CC=$NDK/bin/$NDK_TARGET-gcc
+PKGDB=$NDK/lib/$GHC_TARGET-ghc-$GHC_RELEASE/package.conf.d
 export HOME=$NDK
 
 mkdir -p $NDK/cabal
 [ -e "$NDK/.cabal" ] || ln -s $NDK/cabal $NDK/.cabal
 
 if [ "$1" = install ] || [ "$1" = configure ] ; then
-    exec $NEW_CABAL \
+    exec $BIN_CABAL \
         --with-compiler=$BIN_GHC \
         --with-gcc=$CC \
         --with-ghc=$BIN_GHC \
-        --with-ghc-pkg=$BIN_GHC-pkg \
+        --with-ghc-pkg=$BIN_GHC_PKG \
         --with-ld=$BIN_LD \
         --with-hsc2hs=$BIN_HSC2HS \
         --package-db=$PKGDB \
@@ -21,14 +22,14 @@ if [ "$1" = install ] || [ "$1" = configure ] ; then
 	--configure-option=--host=$NDK_TARGET \
         "$@"
 elif [ "$1" = build ] ; then
-    exec $NEW_CABAL \
+    exec $BIN_CABAL \
         --with-gcc=$CC \
         --with-ghc=$BIN_GHC \
-        --with-ghc-pkg=$BIN_GHC-pkg \
+        --with-ghc-pkg=$BIN_GHC_PKG \
         --with-ld=$BIN_LD \
         --with-hsc2hs=$BIN_HSC2HS \
 	--hsc2hs-options=--cross-compile \
         "$@"
 else
-    exec /usr/bin/cabal "$@"
+    exec $BIN_CABAL "$@"
 fi

@@ -304,7 +304,7 @@ fi
 
 # Add target bindir links
 function maybe_link() {
-    if [ -e "$1" -a ! -e "$2" ] ; then ln -s "$$1" "$2" ; fi
+    if [ -e "$1" -a ! -e "$2" ] ; then ln -sf "$1" "$2" ; fi
 }
 function bindir_link() {
     maybe_link $GHC_PREFIX/bin/$GHC_TARGET-$1 $GHC_PREFIX/$NDK_TARGET/bin/$1
@@ -315,3 +315,10 @@ bindir_link ghc-pkg
 bindir_link hp2ps
 bindir_link hsc2hs
 bindir_link cabal
+
+for f in $(ls $GHC_PREFIX/bin/$GHC_TARGET-*) ; do
+    maybe_link $f $GHC_STAGE0_PREFIX/bin/$(basename $f)
+done
+for f in $(ls $NDK/bin/$NDK_TARGET-*) ; do
+    maybe_link $f $GHC_STAGE0_PREFIX/bin/$(basename $f)
+done

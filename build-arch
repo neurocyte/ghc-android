@@ -87,7 +87,7 @@ if ! [ -d "$NDK" ] ; then
     if ! [ -d "$NDK_PATH" ] ; then
         if ! check_md5 "$NDK_TAR_PATH" "$NDK_MD5" ; then
             echo Downloading the Android NDK $NDK_RELEASE
-            curl -o "${TARDIR}/${NDK_TAR_FILE}"  http://dl.google.com/android/ndk/${NDK_TAR_FILE}
+            curl -L -o "${TARDIR}/${NDK_TAR_FILE}"  http://dl.google.com/android/ndk/${NDK_TAR_FILE}
             check_md5 "$NDK_TAR_PATH" "$NDK_MD5"
         fi
         echo Unpacking the Android NDK $NDK_RELEASE
@@ -112,7 +112,7 @@ NCURSES_SRC="$NDK_ADDON_SRC/ncurses-${NCURSES_RELEASE}"
 if ! [ -d "$NCURSES_SRC" ] ; then
     if ! check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5" ; then
         echo Downloading ncurses $NCURSES_RELEASE
-        curl -o "${TARDIR}/${NCURSES_TAR_FILE}"  http://ftp.gnu.org/pub/gnu/ncurses/${NCURSES_TAR_FILE}
+        curl -L -o "${TARDIR}/${NCURSES_TAR_FILE}"  http://ftp.gnu.org/pub/gnu/ncurses/${NCURSES_TAR_FILE}
         check_md5 "$NCURSES_TAR_PATH" "$NCURSES_MD5"
     fi
     (cd $NDK_ADDON_SRC; tar xf "$TARDIR/$NCURSES_TAR_FILE")
@@ -165,7 +165,7 @@ GMP_SRC="$NDK_ADDON_SRC/gmp-6.0.0"
 if ! [ -d "$GMP_SRC" ] ; then
     if ! check_md5 "$GMP_TAR_PATH" "$GMP_MD5" ; then
         echo Downloading gmp $GMP_RELEASE
-        curl -o "${TARDIR}/${GMP_TAR_FILE}"  https://gmplib.org/download/gmp/${GMP_TAR_FILE}
+        curl -L -o "${TARDIR}/${GMP_TAR_FILE}"  https://gmplib.org/download/gmp/${GMP_TAR_FILE}
         check_md5 "$GMP_TAR_PATH" "$GMP_MD5"
     fi
     (cd $NDK_ADDON_SRC; tar xf "$TARDIR/$GMP_TAR_FILE")
@@ -185,7 +185,7 @@ GHC_STAGE0_TAR_PATH="${TARDIR}/${GHC_STAGE0_TAR_FILE}"
 if ! [ -e "$GHC_STAGE0" ] ; then
     if ! check_md5 "$GHC_STAGE0_TAR_PATH" "$GHC_STAGE0_MD5" ; then
         echo Downloading the GHC $GHC_RELEASE binary release
-        curl -o "${TARDIR}/${GHC_STAGE0_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_STAGE0_TAR_FILE
+        curl -L -o "${TARDIR}/${GHC_STAGE0_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_STAGE0_TAR_FILE
         check_md5 "$GHC_STAGE0_TAR_PATH" "$GHC_STAGE0_MD5"
     fi
     echo Unpacking the GHC $GHC_RELEASE binary release
@@ -201,7 +201,7 @@ GHC_SRC_TAR_PATH="${TARDIR}/${GHC_SRC_TAR_FILE}"
 if ! [ -d "$GHC_SRC" ] ; then
     if ! check_md5 "$GHC_SRC_TAR_PATH" "$GHC_SRC_MD5" ; then
         echo Downloading the GHC $GHC_RELEASE source release
-        curl -o "${TARDIR}/${GHC_SRC_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_SRC_TAR_FILE
+        curl -L -o "${TARDIR}/${GHC_SRC_TAR_FILE}"  http://www.haskell.org/ghc/dist/$GHC_RELEASE/$GHC_SRC_TAR_FILE
         check_md5 "$GHC_SRC_TAR_PATH" "$GHC_SRC_MD5"
     fi
     pushd "$NDK_ADDON_SRC" > /dev/null
